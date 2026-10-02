@@ -13,10 +13,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 
 public class Main extends JavaPlugin implements Listener {
     private static short[] findingTable;
+    private PaperCatalystAccess catalystAccess;
     static class PosCompressor{
         private static final int BITS = 5;
         private static final int MASK = (1 << BITS) - 1; // 0x1F
@@ -44,6 +44,12 @@ public class Main extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        try {
+            catalystAccess = new PaperCatalystAccess();
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            getLogger().severe("Cannot access Paper sculk catalyst cursors; death experience will still drop: " + e);
+        }
+
         // 注册监听器
         getServer().getPluginManager().registerEvents(this, this);
         getLogger().info("ExpRule has been enabled.");
@@ -84,30 +90,24 @@ public class Main extends JavaPlugin implements Listener {
                 return;
             }
 
+            event.setDroppedExp(droppedExp);
+
             // 获取玩家死亡位置
             Block deathBlock = player.getLocation().getBlock();
 
             // 寻找 8 格半径内的最近的幽匿催发体
             Block catalyst = getNearestCatalyst(deathBlock);
 
-            if (Objects.nonNull(catalyst)) {
-                // 附近有催发体：拦截所有掉落的经验球
-                event.setDroppedExp(0);
-
-                // 最近的那个催发体吸收经验并触发幽匿蔓延
+            if (catalyst != null) {
                 try {
-                    ((SculkCatalyst)catalyst.getState()).bloom(deathBlock, droppedExp);
+                    catalystAccess.addCharge((SculkCatalyst) catalyst.getState(), deathBlock, droppedExp);
                 } catch (Exception e) {
-                    // 记录死亡玩家、死亡位置和催发体位置
                     String playerName = player.getName();
                     String deathPos = deathBlock.getWorld().getName() + " " + deathBlock.getX() + "," + deathBlock.getY() + "," + deathBlock.getZ();
                     String catalystPos = catalyst.getWorld().getName() + " " + catalyst.getX() + "," + catalyst.getY() + "," + catalyst.getZ();
                     getLogger().warning("Player " + playerName + " died, nearest catalyst at " + catalystPos +
-                                        " triggered bloom exception, death location: " + deathPos + ", reason: " + e.getMessage());
+                                        " could not receive sculk charge, death location: " + deathPos + ", reason: " + e.getMessage());
                 }
-            } else {
-                // 附近没有催发体：按原版逻辑正常掉出经验球
-                event.setDroppedExp(droppedExp);
             }
         }
     }
