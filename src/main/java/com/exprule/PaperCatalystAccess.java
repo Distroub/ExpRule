@@ -54,7 +54,6 @@ final class PaperCatalystAccess {
         Class<?> registryType = Class.forName("net.minecraft.world.level.gameevent.GameEventListenerRegistry");
         visitorType = Class.forName("net.minecraft.world.level.gameevent.GameEventListenerRegistry$ListenerVisitor");
         catalystType = Class.forName("net.minecraft.world.level.block.entity.SculkCatalystBlockEntity$CatalystListener");
-
         getHandle = Class.forName("org.bukkit.craftbukkit.entity.CraftEntity").getMethod("getHandle");
         level = entityType.getMethod("level");
         position = entityType.getMethod("position");
@@ -145,6 +144,5 @@ final class PaperCatalystAccess {
             addCursors.invoke(getSpreader.invoke(listener), start, charge);
             awardAdvancement.invoke(listener, world, entity);
         }
-        // The pending native ENTITY_DIE handles consumption and bloom exactly once.
     }
 }
