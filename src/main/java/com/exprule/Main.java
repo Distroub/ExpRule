@@ -39,15 +39,16 @@ public class Main extends JavaPlugin implements Listener {
             event.setKeepLevel(false);
             event.setNewLevel(0);
             event.setNewExp(0);
-            event.setDroppedExp(PaperCatalystAccess.baseExperience(player));
+            int droppedExp = PaperCatalystAccess.baseExperience(player);
             if (catalystAccess != null) {
                 try {
-                    event.setDroppedExp(catalystAccess.deathExperience(player, event.getDamageSource().getCausingEntity()));
+                    droppedExp = catalystAccess.deathExperience(player, event.getDamageSource().getCausingEntity());
                 } catch (ReflectiveOperationException | RuntimeException e) {
                     getLogger().log(Level.SEVERE, "Cannot calculate Paper death experience for " + player.getName()
-                            + "; base death experience will still drop.", e);
+                    + "; base death experience will still drop.", e);
                 }
             }
+            event.setDroppedExp(droppedExp);
         }
     }
 
